@@ -239,9 +239,11 @@ function public.refresh()
 		strings:insert({ text = (" "):rep(public.picker_width), background = color })
 
 		if row == 0 then
-			strings:insert({ text = "          " .. public.format, foreground = "#FFFFFF" })
+			strings:insert({ text = "        Template: " })
+			strings:insert({ text = public.format, foreground = "#FFFFFF" })
 		else
-			strings:insert({ text = "          " .. format.format_color(color, public.format), foreground = "#FFFFFF" })
+			strings:insert({ text = "          Result: " })
+			strings:insert({ text = format.format_color(color, public.format), foreground = "#FFFFFF" })
 		end
 
 		row = row + 1

@@ -16,7 +16,8 @@ local default_config = {
 			l = "move_cursor_right", -- The action when l is pressed, move cursor right by default.
 			["<Down>"] = "hue_down", -- The action when <Down> is pressed, hue down by default.
 			["<Up>"] = "hue_up", -- The action when <Up> is pressed, hue up by default.
-			["<Enter>"] = "insert_color" -- The action when <Enter> is pressed, insert color by default.
+			["<Enter>"] = "insert_color", -- The action when <Enter> is pressed, insert color by default.
+			t = "edit_formatting_template" -- The action when t is pressed, edit formatting template by default.
 		}
 	},
 	formatting = {

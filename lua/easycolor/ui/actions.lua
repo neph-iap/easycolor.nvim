@@ -46,4 +46,13 @@ function public.insert_color()
 	vim.api.nvim_put({ formatter.format_color(ui.color_at_cursor(), ui.format) }, "", false, true)
 end
 
+function public.edit_formatting_template()
+	vim.ui.input({
+		prompt = "Format Template: "
+	}, function(input)
+		ui.format = input
+		ui.refresh()
+	end)
+end
+
 return public
