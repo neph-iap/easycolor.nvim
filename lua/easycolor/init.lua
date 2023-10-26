@@ -3,7 +3,11 @@ local config = require("easycolor.config")
 
 local public = {}
 
+-- Sets up the EasyColor plugin
+--
 ---@param options Config the configuration options
+---
+---@return nil
 function public.setup(options)
 	config.set_config(options)
 	local ui = require("easycolor.ui")

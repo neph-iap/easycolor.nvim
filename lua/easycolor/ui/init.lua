@@ -1,3 +1,7 @@
+local config = require("easycolor.config")
+local color_utils = require("easycolor.util.colors")
+local format = require("easycolor.format")
+
 local public = {}
 
 ---@type string[]
@@ -6,6 +10,9 @@ local highlight_groups = {}
 public.picker_width = 20
 public.picker_height = 10
 
+public.hue = 0
+
+public.format = config.options.formatting.default_format
 
 -- Gets a highlight group for a color, creating it if it doesn't exist already.
 --
@@ -66,124 +73,92 @@ local function write_line(option_list, is_centered)
 	end
 end
 
--- Pads a string to the left
---
----@param str string The string to pad
----@param length number The length to pad the string to
----@param char string The character to pad the string with
----
----@return string padded The padded string
-local function pad_start(str, length, char)
-	if #str >= length then return str end
-	return (char:rep(length - #str)) .. str
-end
-
-local function hex_to_rgb(hex_color)
-	local r = tonumber(hex_color:sub(2, 3), 16)
-	local g = tonumber(hex_color:sub(4, 5), 16)
-	local b = tonumber(hex_color:sub(6, 7), 16)
-	return { red = r, green = g, blue = b }
-end
-
-local function rgb_to_hex(red, blue, green)
-	return ("#%s%s%s"):format(pad_start(("%x"):format(red), 2, "0"), pad_start(("%x"):format(blue), 2, "0"), pad_start(("%x"):format(green), 2, "0"))
-end
-
--- Converts a HSV color to a hex color
---
----@param hue number The hue of the color 
----@param saturation number The saturation of the color
----@param value number The value of the color
----
----@return string hex The hex color
-local function hsv_to_hex(hue, saturation, value)
-	hue = (hue % 360 + 360) % 360
-	saturation = math.max(0, math.min(1, saturation))
-	value = math.max(0, math.min(1, value))
-
-	local chroma = value * saturation
-	local x = chroma * (1 - math.abs((hue / 60) % 2 - 1))
-	local min = value - chroma
-
-	local red, green, blue
-
-	if hue >= 0 and hue < 60 then
-		red = chroma
-		green = x
-		blue = 0
-	elseif hue >= 60 and hue < 120 then
-		red = x
-		green = chroma
-		blue = 0
-	elseif hue >= 120 and hue < 180 then
-		red = 0
-		green = chroma
-		blue = x
-	elseif hue >= 180 and hue < 240 then
-		red = 0
-		green = x
-		blue = chroma
-	elseif hue >= 240 and hue < 300 then
-		red = x
-		green = 0
-		blue = chroma
-	else
-		red = chroma
-		green = 0
-		blue = x
-	end
-
-	red = math.floor((red + min) * 255 + 0.5)
-	green = math.floor((green + min) * 255 + 0.5)
-	blue = math.floor((blue + min) * 255 + 0.5)
-
-	return rgb_to_hex(red, green, blue)
-end
-
-local function hex_to_hsv(hex_color)
-	local rgb = hex_to_rgb(hex_color)
-
-	local max = math.max(rgb.red, rgb.green, rgb.blue)
-	local min = math.min(rgb.red, rgb.green, rgb.blue)
-
-	local value = max
-	local hue
-	local saturation
-
-	local difference = max - min
-	if max == 0 then saturation = 0 else saturation = difference / max end
-
-	if max == min then
-		hue = 0
-	else
-		if max == rgb.red then
-			hue = (rgb.green - rgb.blue) / difference
-			if rgb.green < rgb.blue then
-				hue = hue + 6
-			end
-		elseif max == rgb.green then
-			hue = (rgb.blue - rgb.red) / difference + 2
-		else
-			hue = (rgb.red - rgb.green) / difference + 4
-		end
-		hue = hue * 60
-	end
-
-	return { hue = hue, saturation = saturation, value = value }
-end
-
-local function color_at_cursor()
+-- Gets the color at the cursor in the main color picker
+-- 
+---@return string
+function public.color_at_cursor()
 	local row = public.cursor_row
 	local column = public.cursor_column
 
 	local value = 1 - row / (public.picker_height - 1)
 	local saturation = column / (public.picker_width - 1)
-	local hue = 0
+	local hue = public.hue
 
-	if value < 0 or value > 1 then return nil end
-	if saturation < 0 or saturation > 1 then return nil end
+	return color_utils.hsv_to_hex(hue, saturation, value)
+end
 
-	return hsv_to_hex(hue, saturation, value)
+-- Generates a slider for the given color property
+--
+---@param value_name "red" | "green" | "blue" | "hue" | "saturation" | "value" The name of the property
+---
+---@return { text: string, background?: string, foreground?: string }[] strings The generated line
+local function generate_line(value_name)
+	local is_rgb = true
+	if value_name == "hue" or value_name == "saturation" or value_name == "value" then is_rgb = false end
+
+	---@type table
+	local color = color_utils.hex_to_rgb(public.color_at_cursor() or "#FF0000")
+	if not is_rgb then color = color_utils.hex_to_hsv(public.color_at_cursor() or "#FF0000") end
+
+	local indices = {
+		red = 1,
+		green = 2,
+		blue = 3,
+		hue = 1,
+		saturation = 2,
+		value = 3
+	}
+
+	local max_values = {
+		red = 255,
+		green = 255,
+		blue = 255,
+		hue = 360,
+		saturation = 1,
+		value = 1
+	}
+
+	local index = indices[value_name]
+	local max_value = max_values[value_name]
+
+	local line = Table { { text = "  " } }
+
+	local value = 0
+	while value < max_value do
+		local char = " "
+		if math.abs(value - color[value_name]) < (max_value / public.picker_width / 2) then char = config.options.ui.symbols.selection end
+
+		local generated_color
+		if is_rgb then
+			if index == 1 then
+				generated_color = color_utils.rgb_to_hex(value, color.green, color.blue)
+			elseif index == 2 then
+				generated_color = color_utils.rgb_to_hex(color.red, value, color.blue)
+			else
+				generated_color = color_utils.rgb_to_hex(color.red, color.green, value)
+			end
+		else
+			if index == 1 then
+				generated_color = color_utils.hsv_to_hex(value, color.saturation, color.value)
+			elseif index == 2 then
+				generated_color = color_utils.hsv_to_hex(color.hue, value, color.value)
+			else
+				generated_color = color_utils.hsv_to_hex(color.hue, color.saturation, value)
+			end
+		end
+
+		line:insert({ text = char, background = generated_color, foreground = "#FFFFFF" })
+		value = value + (max_value / public.picker_width)
+	end
+
+	local function fmt(number)
+		if value_name == "saturation" or value_name == "value" then return tostring(math.floor(number * 100 + 0.5)) .. "%" end
+		if value_name == "hue" then return tostring(math.floor(number + 0.5)) .. "°" end
+		return tostring(number)
+	end
+
+	line:insert({ text = " " .. fmt(color[value_name]) })
+	return line
 end
 
 -- Draws the color picker
@@ -192,14 +167,14 @@ end
 function public.refresh()
 	vim.api.nvim_buf_set_option(public.buffer, "modifiable", true)
 	is_first_draw_call = true
-	local hue = 0
 
-	-- write_line({})
+	-- Header
 	write_line({
-		{ text = " EasyColor Picker                        (Press ? for help)" },
+		{ text = " EasyColor Picker                    (Press ? for help)" },
 	})
 	write_line({})
 
+	-- Color picker
 	local row = 0
 	while row < public.picker_height do
 		local column = 0
@@ -208,108 +183,40 @@ function public.refresh()
 		while column < public.picker_width do
 			local value = 1 - row / (public.picker_height - 1)
 			local saturation = column / (public.picker_width - 1)
-			local color = hsv_to_hex(hue, saturation, value)
+			local color = color_utils.hsv_to_hex(public.hue, saturation, value)
 
 			local char = " "
-			if row == public.cursor_row and column == public.cursor_column then char = "󰆢" end
+			if row == public.cursor_row and column == public.cursor_column then char = config.options.ui.symbols.selection end
 
 			strings:insert({ text = char, background = color, foreground = '#FFFFFF' })
 			column = column + 1
 		end
+
+		-- Hue Slider
 		strings:insert({ text = "    " })
-		strings:insert({ text = "  ", background = hsv_to_hex(row / public.picker_height * 360, 1, 1) })
+		strings:insert({ text = "  ", background = color_utils.hsv_to_hex(row / public.picker_height * 360, 1, 1) })
 
-		if row == 0 then strings:insert({ text = " ◀"}) end
+		if row /public.picker_height * 360 == public.hue then strings:insert({ text = " ◀"}) end
 
+		-- RGB and HSV rows
 		local row_texts = {
 			{
 				{ text = "  RGB: " }
 			},
-			(function()
-				local redline = Table { { text = "    " } }
-				local color = hex_to_rgb(color_at_cursor() or "#FF0000")
-				local red = 0
-				while red < 256 do
-					local char = " "
-					if math.abs(red - color.red) < (128 / public.picker_width) then char = "󰆢" end
-					redline:insert({ text = char, background = rgb_to_hex(red, color.green, color.blue), foreground = "#FFFFFF" })
-					red = red + (255 / public.picker_width)
-				end
-				redline:insert({ text = " " .. tostring(hex_to_rgb(color_at_cursor() or "#FF0000").red) })
-				return redline
-			end)(),
-			(function()
-				local greenline = Table { { text = "    " } }
-				local color = hex_to_rgb(color_at_cursor() or "#FF0000")
-				local green = 0
-				while green < 256 do
-					local char = " "
-					if math.abs(green - color.green) < (128 / public.picker_width) then char = "󰆢" end
-					greenline:insert({ text = char, background = rgb_to_hex(color.red, green, color.blue), foreground = "#FFFFFF" })
-					green = green + (255 / public.picker_width)
-				end
-				greenline:insert({ text = " " .. tostring(hex_to_rgb(color_at_cursor() or "#FF0000").green) })
-				return greenline
-			end)(),
-			(function()
-				local blueline = Table { { text = "    " } }
-				local color = hex_to_rgb(color_at_cursor() or "#FF0000")
-				local blue = 0
-				while blue < 256 do
-					local char = " "
-					if math.abs(blue - color.blue) < (128 / public.picker_width) then char = "󰆢" end
-					blueline:insert({ text = char, background = rgb_to_hex(color.red, color.green, blue), foreground = "#FFFFFF" })
-					blue = blue + (255 / public.picker_width)
-				end
-				blueline:insert({ text = " " .. tostring(hex_to_rgb(color_at_cursor() or "#FF0000").blue) })
-				return blueline
-			end)(),
+			generate_line("red"),
+			generate_line("green"),
+			generate_line("blue"),
 			{},
 			{
-				{ text = "    HSV: "}
+				{ text = "  HSV: "}
 			},
-			(function()
-				local hueline = Table { { text = "    " } }
-				local color = hex_to_hsv(color_at_cursor() or "#FF0000")
-				hue = 0
-				while hue < 360 do
-					local char = " "
-					if math.abs(hue - color.hue) < (360 / public.picker_width) then char = "󰆢" end
-					hueline:insert({ text = char, background = hsv_to_hex(hue, color.saturation, color.value), foreground = "#FFFFFF" })
-					hue = hue + (360 / public.picker_width)
-				end
-				hueline:insert({ text = " " .. tostring(hex_to_hsv(color_at_cursor() or "#FF0000").hue) })
-				return hueline
-			end)(),
-			(function()
-				local saturation_line = Table { { text = "    " } }
-				local color = hex_to_hsv(color_at_cursor() or "#FF0000")
-				local saturation = 0
-				while saturation < 1 do
-					local char = " "
-					if math.abs(saturation - color.saturation) < (0.5 / public.picker_width) then char = "󰆢" end
-					saturation_line:insert({ text = char, background = hsv_to_hex(color.hue, saturation, color.value), foreground = "#FFFFFF" })
-					saturation = saturation + (1 / public.picker_width)
-				end
-				saturation_line:insert({ text = " " .. tostring(math.floor(hex_to_hsv(color_at_cursor() or "#FF0000").saturation * 100)) .. "%" })
-				return saturation_line
-			end)(),
-			(function()
-				local value_line = Table { { text = "    " } }
-				local color = hex_to_hsv(color_at_cursor() or "#FF0000")
-				local value = 0
-				while value < 1 do
-					local char = " "
-					if math.abs(value - color.value) < (0.5 / public.picker_width) then char = "󰆢" end
-					value_line:insert({ text = char, background = hsv_to_hex(color.hue, color.saturation, value), foreground = "#FFFFFF" })
-					value = value + (1 / public.picker_width)
-				end
-				value_line:insert({ text = " " .. tostring(hex_to_hsv(color_at_cursor() or "#FF0000").value) })
-				return value_line
-			end)(),
+			generate_line("hue"),
+			generate_line("saturation"),
+			generate_line("value"),
 		}
 
 		if row_texts[row + 1] then
+			if row /public.picker_height * 360 ~= public.hue then strings:insert({ text = "  " }) end
 			for _, text in ipairs(row_texts[row + 1]) do
 				strings:insert(text)
 			end
@@ -322,19 +229,24 @@ function public.refresh()
 	-- Preview
 	row = 0
 	write_line({})
-	write_line({ { text = (" Preview:                              Hex: " .. (color_at_cursor() or "#FFFFFF"):upper()) } })
+	write_line({ { text = " Preview:                      Format: " } })
 	write_line({})
 
-	local color = color_at_cursor() or "#FF0000"
+	local color = public.color_at_cursor() or "#FF0000"
 	while row < 2 do
 		local strings = Table {}
 		strings:insert({ text = " " })
-		strings:insert({ text = (" "):rep(public.picker_width * 2 + 18), background = color })
+		strings:insert({ text = (" "):rep(public.picker_width), background = color })
+
+		if row == 0 then
+			strings:insert({ text = "          " .. public.format, foreground = "#FFFFFF" })
+		else
+			strings:insert({ text = "          " .. format.format_color(color, public.format), foreground = "#FFFFFF" })
+		end
+
 		row = row + 1
 		write_line(strings)
 	end
-
-	-- write_line({})
 
 	vim.api.nvim_buf_set_option(public.buffer, "modifiable", false)
 end
@@ -348,7 +260,7 @@ function public.open_window()
 	vim.api.nvim_buf_set_option(public.buffer, "bufhidden", "wipe")
 
 	public.height = 17
-	public.width = 60
+	public.width = 56
 
 	local vim_width = vim.api.nvim_get_option("columns")
 	local vim_height = vim.api.nvim_get_option("lines")
@@ -363,19 +275,7 @@ function public.open_window()
 		col = math.ceil((vim_width - public.width) / 2),
 	}
 
-	local mappings = {
-		q = "close_window",
-		j = "move_cursor_down",
-		k = "move_cursor_up",
-		h = "move_cursor_left",
-		l = "move_cursor_right",
-		["<Down>"] = "move_cursor_down",
-		["<Up>"] = "move_cursor_up",
-		["<Left>"] = "move_cursor_left",
-		["<Right>"] = "move_cursor_right"
-	}
-
-	for key, action in pairs(mappings) do
+	for key, action in pairs(config.options.ui.mappings) do
 		vim.api.nvim_buf_set_keymap(public.buffer, "n", key, (":lua require('easycolor.ui.actions').%s()<CR>"):format(action), { nowait = true, noremap = true, silent = true })
 	end
 
@@ -385,5 +285,4 @@ function public.open_window()
 	public.window = vim.api.nvim_open_win(public.buffer, true, window_options)
 	public.refresh()
 end
-
 return public
