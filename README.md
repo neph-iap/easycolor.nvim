@@ -8,6 +8,7 @@ Using `lazy.nvim`:
 ```lua
 {
     "neph-iap/easycolor.nvim",
+    dependencies = { "stevearc/dressing.nvim" } -- Optional, but provides better UI for editing the formatting template
     opts = {},
     keys = { { "<leader>b", "<cmd>EasyColor<cr>", desc = "Color Picker" } }
 }
@@ -35,7 +36,12 @@ local default_config = {
 			l = "move_cursor_right", -- The action when l is pressed, move cursor right by default.
 			["<Down>"] = "hue_down", -- The action when <Down> is pressed, hue down by default.
 			["<Up>"] = "hue_up", -- The action when <Up> is pressed, hue up by default.
+			["<Enter>"] = "insert_color", -- The action when <Enter> is pressed, insert color by default.
+			t = "edit_formatting_template" -- The action when t is pressed, edit formatting template by default.
 		}
+	},
+	formatting = {
+		default_format = "$X"
 	}
 }
 ```
@@ -47,3 +53,15 @@ Neovim already has several color pickers available, but I found none of them to 
 `easycolor.nvim` aims to bring the familiar color picker from applications like Photoshop, Gimp, paint.net, and more into Neovim. This 2D XY=SV + Hue Slider model has proven inuitive and simple to use, and is the standard for many applications.
 
 `easycolor.nvim` does provide a more limited selection of colors than other plugins. This plugin is designed for those who don't need access to all 16.8 million colors, and instead prefer ease of use over fine-grained selection.
+
+## Formatting Codes
+
+Available formatting codes are:
+- `$X` - Uppercase hexidecimal (i.e. #4A08AB)
+- `$x` - Lowercase hexidecimal (i.e. #4a08ab)
+- `$r` - Red, 0 - 255
+- `$g` - Green, 0 - 255
+- `$b` - Blue, 0 - 255
+- `$h` - Hue, 0 - 360
+- `$s` - Saturation, 0 - 1
+- `$v` - Value, 0 - 1
