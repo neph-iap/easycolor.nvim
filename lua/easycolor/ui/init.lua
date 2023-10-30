@@ -196,7 +196,7 @@ function public.refresh()
 		strings:insert({ text = "    " })
 		strings:insert({ text = "  ", background = color_utils.hsv_to_hex(row / public.picker_height * 360, 1, 1) })
 
-		if row /public.picker_height * 360 == public.hue then strings:insert({ text = " ◀"}) end
+		if row /public.picker_height * 360 == public.hue then strings:insert({ text = " " .. config.options.ui.symbols.hue_arrow }) end
 
 		-- RGB and HSV rows
 		local row_texts = {
