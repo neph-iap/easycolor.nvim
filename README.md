@@ -1,5 +1,7 @@
 # easycolor.nvim
 
+The easiest Neovim color picker in the world. `easycolor.nvim` brings the classic Photoshop-style color picker into Neovim.
+
 ![demo](./docs/demo.png)
 
 ## Example Installation
