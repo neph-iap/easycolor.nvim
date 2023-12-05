@@ -194,7 +194,7 @@ function public.refresh()
 
 	-- Header
 	write_line({
-		{ text = " EasyColor Picker                    (Press ? for help)" },
+		{ text = " EasyColor Picker" },
 	})
 	write_line({})
 
@@ -227,30 +227,30 @@ function public.refresh()
 		end
 
 		-- RGB and HSV rows
-		local row_texts = {
-			{
-				{ text = "  RGB: " },
-			},
-			generate_line("red"),
-			generate_line("green"),
-			generate_line("blue"),
-			{},
-			{
-				{ text = "  HSV: " },
-			},
-			generate_line("hue"),
-			generate_line("saturation"),
-			generate_line("value"),
-		}
-
-		if row_texts[row + 1] then
-			if row / public.picker_height * 360 ~= public.hue then
-				strings:insert({ text = "  " })
-			end
-			for _, text in ipairs(row_texts[row + 1]) do
-				strings:insert(text)
-			end
-		end
+		-- local row_texts = {
+		-- 	{
+		-- 		{ text = "  RGB: " },
+		-- 	},
+		-- 	generate_line("red"),
+		-- 	generate_line("green"),
+		-- 	generate_line("blue"),
+		-- 	{},
+		-- 	{
+		-- 		{ text = "  HSV: " },
+		-- 	},
+		-- 	generate_line("hue"),
+		-- 	generate_line("saturation"),
+		-- 	generate_line("value"),
+		-- }
+		--
+		-- if row_texts[row + 1] then
+		-- 	if row / public.picker_height * 360 ~= public.hue then
+		-- 		strings:insert({ text = "  " })
+		-- 	end
+		-- 	for _, text in ipairs(row_texts[row + 1]) do
+		-- 		strings:insert(text)
+		-- 	end
+		-- end
 		write_line(strings)
 
 		row = row + 1
@@ -259,7 +259,7 @@ function public.refresh()
 	-- Preview
 	row = 0
 	write_line({})
-	write_line({ { text = " Preview:                      Format: " } })
+	write_line({ { text = " Preview:" } })
 	write_line({})
 
 	local color = public.color_at_cursor() or "#FF0000"
@@ -268,17 +268,21 @@ function public.refresh()
 		strings:insert({ text = " " })
 		strings:insert({ text = (" "):rep(public.picker_width), background = color })
 
-		if row == 0 then
-			strings:insert({ text = "        Template: " })
-			strings:insert({ text = public.format, foreground = "#FFFFFF" })
-		else
-			strings:insert({ text = "          Result: " })
-			strings:insert({ text = format.format_color(color, public.format), foreground = "#FFFFFF" })
-		end
+		-- if row == 0 then
+		-- 	strings:insert({ text = "        Template: " })
+		-- 	strings:insert({ text = public.format, foreground = "#FFFFFF" })
+		-- else
+		-- 	strings:insert({ text = "          Result: " })
+		-- 	strings:insert({ text = format.format_color(color, public.format), foreground = "#FFFFFF" })
+		-- end
 
 		row = row + 1
 		write_line(strings)
 	end
+
+	write_line({ { text = "" } })
+	write_line({ { text = " Template: " }, { text = public.format, foreground = "#FFFFFF" } })
+	write_line({ { text = " Result:   " }, { text = format.format_color(color, public.format), foreground = "#FFFFFF" } })
 
 	vim.api.nvim_buf_set_option(public.buffer, "modifiable", false)
 end
@@ -291,8 +295,8 @@ function public.open_window()
 	public.buffer = vim.api.nvim_create_buf(false, true)
 	vim.api.nvim_buf_set_option(public.buffer, "bufhidden", "wipe")
 
-	public.height = 17
-	public.width = 56
+	public.height = 20
+	public.width = 30
 
 	local vim_width = vim.api.nvim_get_option("columns")
 	local vim_height = vim.api.nvim_get_option("lines")
