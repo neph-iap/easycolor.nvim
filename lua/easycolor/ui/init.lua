@@ -105,90 +105,6 @@ function public.color_at_cursor()
 	return color_utils.hsv_to_hex(hue, saturation, value)
 end
 
--- Generates a slider for the given color property
---
----@param value_name "red" | "green" | "blue" | "hue" | "saturation" | "value" The name of the property
----
----@return { text: string, background?: string, foreground?: string }[] strings The generated line
-local function generate_line(value_name)
-	local is_rgb = true
-	if value_name == "hue" or value_name == "saturation" or value_name == "value" then
-		is_rgb = false
-	end
-
-	---@type table
-	local color = color_utils.hex_to_rgb(public.color_at_cursor() or "#FF0000")
-	if not is_rgb then
-		color = color_utils.hex_to_hsv(public.color_at_cursor() or "#FF0000")
-	end
-
-	local indices = {
-		red = 1,
-		green = 2,
-		blue = 3,
-		hue = 1,
-		saturation = 2,
-		value = 3,
-	}
-
-	local max_values = {
-		red = 255,
-		green = 255,
-		blue = 255,
-		hue = 360,
-		saturation = 1,
-		value = 1,
-	}
-
-	local index = indices[value_name]
-	local max_value = max_values[value_name]
-
-	local line = Table({ { text = "  " } })
-
-	local value = 0
-	while value < max_value do
-		local char = " "
-		if math.abs(value - color[value_name]) < (max_value / public.picker_width / 2) then
-			char = config.options.ui.symbols.selection
-		end
-
-		local generated_color
-		if is_rgb then
-			if index == 1 then
-				generated_color = color_utils.rgb_to_hex(value, color.green, color.blue)
-			elseif index == 2 then
-				generated_color = color_utils.rgb_to_hex(color.red, value, color.blue)
-			else
-				generated_color = color_utils.rgb_to_hex(color.red, color.green, value)
-			end
-		else
-			if index == 1 then
-				generated_color = color_utils.hsv_to_hex(value, color.saturation, color.value)
-			elseif index == 2 then
-				generated_color = color_utils.hsv_to_hex(color.hue, value, color.value)
-			else
-				generated_color = color_utils.hsv_to_hex(color.hue, color.saturation, value)
-			end
-		end
-
-		line:insert({ text = char, background = generated_color, foreground = "#FFFFFF" })
-		value = value + (max_value / public.picker_width)
-	end
-
-	local function fmt(number)
-		if value_name == "saturation" or value_name == "value" then
-			return tostring(math.floor(number * 100 + 0.5)) .. "%"
-		end
-		if value_name == "hue" then
-			return tostring(math.floor(number + 0.5)) .. "°"
-		end
-		return tostring(number)
-	end
-
-	line:insert({ text = " " .. fmt(color[value_name]) })
-	return line
-end
-
 -- Draws the color picker
 --
 ---@return nil
@@ -232,31 +148,6 @@ function public.refresh()
 			strings:insert({ text = " " .. config.options.ui.symbols.hue_arrow })
 		end
 
-		-- RGB and HSV rows
-		-- local row_texts = {
-		-- 	{
-		-- 		{ text = "  RGB: " },
-		-- 	},
-		-- 	generate_line("red"),
-		-- 	generate_line("green"),
-		-- 	generate_line("blue"),
-		-- 	{},
-		-- 	{
-		-- 		{ text = "  HSV: " },
-		-- 	},
-		-- 	generate_line("hue"),
-		-- 	generate_line("saturation"),
-		-- 	generate_line("value"),
-		-- }
-		--
-		-- if row_texts[row + 1] then
-		-- 	if row / public.picker_height * 360 ~= public.hue then
-		-- 		strings:insert({ text = "  " })
-		-- 	end
-		-- 	for _, text in ipairs(row_texts[row + 1]) do
-		-- 		strings:insert(text)
-		-- 	end
-		-- end
 		write_line(strings)
 
 		row = row + 1
@@ -273,15 +164,6 @@ function public.refresh()
 		local strings = Table({})
 		strings:insert({ text = " " })
 		strings:insert({ text = (" "):rep(public.picker_width + 6), background = color })
-
-		-- if row == 0 then
-		-- 	strings:insert({ text = "        Template: " })
-		-- 	strings:insert({ text = public.format, foreground = "#FFFFFF" })
-		-- else
-		-- 	strings:insert({ text = "          Result: " })
-		-- 	strings:insert({ text = format.format_color(color, public.format), foreground = "#FFFFFF" })
-		-- end
-
 		row = row + 1
 		write_line(strings)
 	end
