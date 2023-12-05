@@ -20,6 +20,10 @@ public.format = config.options.formatting.default_format
 ---
 ---@return string name The name of the highlight group
 local function get_highlight_group(options)
+	if vim.fn.hlexists(options.foreground) == 1 then
+		return options.foreground
+	end
+
 	local name = "EasyColor"
 	if options.foreground then
 		name = name .. "Fg" .. options.foreground:sub(2)
@@ -283,7 +287,45 @@ function public.refresh()
 	end
 
 	write_line({ { text = "" } })
-	write_line({ { text = " Template: " }, { text = public.format, foreground = "#FFFFFF" } })
+
+	-- Template
+	local template = Table({})
+	local function pattern_split(input, pattern)
+		local result = {}
+		local finish = 1
+
+		repeat
+			local next_start, next_finish, match = input:find("(" .. pattern .. ")", finish + 1)
+
+			if next_start then
+				local segment = input:sub(finish, next_start - 1)
+				if #segment > 0 then
+					table.insert(result, segment)
+				end
+
+				table.insert(result, match)
+				finish = next_finish + 1
+			else
+				local segment = input:sub(finish)
+				if #segment > 0 then
+					table.insert(result, segment)
+				end
+			end
+		until not next_start
+
+		return result
+	end
+
+	template:insert({ text = " Template: " })
+	for _, part in ipairs(pattern_split(public.format, "%$%w")) do
+		if part:sub(1, 1) == "$" then
+			template:insert({ text = part, foreground = "@variable" })
+		else
+			template:insert({ text = part })
+		end
+	end
+
+	write_line(template)
 	write_line({ { text = " Result:   " }, { text = format.format_color(color, public.format), foreground = "#FFFFFF" } })
 
 	vim.api.nvim_buf_set_option(public.buffer, "modifiable", false)
