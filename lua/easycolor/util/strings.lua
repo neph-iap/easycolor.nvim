@@ -8,7 +8,9 @@ local public = {}
 ---
 ---@return string padded The padded string
 function public.pad_start(str, length, char)
-	if #str >= length then return str end
+	if #str >= length then
+		return str
+	end
 	return (char:rep(length - #str)) .. str
 end
 

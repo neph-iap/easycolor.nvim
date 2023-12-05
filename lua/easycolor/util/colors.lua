@@ -27,7 +27,7 @@ end
 
 -- Converts a HSV color to a hex color
 --
----@param hue integer The hue of the color 
+---@param hue integer The hue of the color
 ---@param saturation number The saturation of the color
 ---@param value number The value of the color
 ---
@@ -92,7 +92,11 @@ function public.hex_to_hsv(hex_color)
 	local saturation
 
 	local difference = max - min
-	if max == 0 then saturation = 0 else saturation = difference / max end
+	if max == 0 then
+		saturation = 0
+	else
+		saturation = difference / max
+	end
 
 	if max == min then
 		hue = 0

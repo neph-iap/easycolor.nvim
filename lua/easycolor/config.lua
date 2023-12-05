@@ -6,7 +6,7 @@ local default_config = {
 		border = "rounded", -- Border style of the window
 		symbols = {
 			selection = "󰆢", -- The symbol to draw over the selected color
-			hue_arrow = "◀" -- The arrow to draw next to the selected hue
+			hue_arrow = "◀", -- The arrow to draw next to the selected hue
 		},
 		mappings = {
 			q = "close_window", -- The action when q is pressed, close window by default.
@@ -17,12 +17,12 @@ local default_config = {
 			["<Down>"] = "hue_down", -- The action when <Down> is pressed, hue down by default.
 			["<Up>"] = "hue_up", -- The action when <Up> is pressed, hue up by default.
 			["<Enter>"] = "insert_color", -- The action when <Enter> is pressed, insert color by default.
-			t = "edit_formatting_template" -- The action when t is pressed, edit formatting template by default.
-		}
+			t = "edit_formatting_template", -- The action when t is pressed, edit formatting template by default.
+		},
 	},
 	formatting = {
-		default_format = "$X"
-	}
+		default_format = "$X",
+	},
 }
 
 public.options = default_config

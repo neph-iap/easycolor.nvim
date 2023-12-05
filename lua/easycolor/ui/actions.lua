@@ -48,7 +48,7 @@ end
 
 function public.edit_formatting_template()
 	vim.ui.input({
-		prompt = "Format Template: "
+		prompt = "Format Template: ",
 	}, function(input)
 		ui.format = input
 		ui.refresh()

@@ -57,8 +57,8 @@ Neovim already has several color pickers available, but I found none of them to 
 ## Formatting Codes
 
 Available formatting codes are:
-- `$X` - Uppercase hexidecimal (i.e. #4A08AB)
-- `$x` - Lowercase hexidecimal (i.e. #4a08ab)
+- `$X` - Uppercase hexadecimal (i.e. #4A08AB)
+- `$x` - Lowercase hexadecimal (i.e. #4a08ab)
 - `$r` - Red, 0 - 255
 - `$g` - Green, 0 - 255
 - `$b` - Blue, 0 - 255
