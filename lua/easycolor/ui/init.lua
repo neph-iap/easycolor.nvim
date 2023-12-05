@@ -21,14 +21,24 @@ public.format = config.options.formatting.default_format
 ---@return string name The name of the highlight group
 local function get_highlight_group(options)
 	local name = "EasyColor"
-	if options.foreground then name = name .. "Fg" .. options.foreground:sub(2) end
-	if options.background then name = name .. "Bg" .. options.background:sub(2) end
+	if options.foreground then
+		name = name .. "Fg" .. options.foreground:sub(2)
+	end
+	if options.background then
+		name = name .. "Bg" .. options.background:sub(2)
+	end
 
-	if vim.tbl_contains(highlight_groups, name) then return name end
+	if vim.tbl_contains(highlight_groups, name) then
+		return name
+	end
 
 	local command = "hi " .. name .. " "
-	if options.foreground then command = command .. "guifg=" .. options.foreground .. " " end
-	if options.background then command = command .. "guibg=" .. options.background .. " " end
+	if options.foreground then
+		command = command .. "guifg=" .. options.foreground .. " "
+	end
+	if options.background then
+		command = command .. "guibg=" .. options.background .. " "
+	end
 
 	table.insert(highlight_groups, name)
 	vim.cmd(command)
@@ -52,14 +62,18 @@ local function write_line(option_list, is_centered)
 	local shift = 0
 	if is_centered then
 		shift = math.floor(public.width / 2) - math.floor(text:len() / 2)
-		text = (' '):rep(shift) .. text
+		text = (" "):rep(shift) .. text
 	end
 
 	local line = vim.api.nvim_buf_line_count(public.buffer)
-	if is_first_draw_call then line = 0 end
+	if is_first_draw_call then
+		line = 0
+	end
 
 	local start = -1
-	if is_first_draw_call then start = 0 end
+	if is_first_draw_call then
+		start = 0
+	end
 	is_first_draw_call = false
 	vim.api.nvim_buf_set_lines(public.buffer, start, -1, false, { text })
 
@@ -74,7 +88,7 @@ local function write_line(option_list, is_centered)
 end
 
 -- Gets the color at the cursor in the main color picker
--- 
+--
 ---@return string
 function public.color_at_cursor()
 	local row = public.cursor_row
@@ -94,11 +108,15 @@ end
 ---@return { text: string, background?: string, foreground?: string }[] strings The generated line
 local function generate_line(value_name)
 	local is_rgb = true
-	if value_name == "hue" or value_name == "saturation" or value_name == "value" then is_rgb = false end
+	if value_name == "hue" or value_name == "saturation" or value_name == "value" then
+		is_rgb = false
+	end
 
 	---@type table
 	local color = color_utils.hex_to_rgb(public.color_at_cursor() or "#FF0000")
-	if not is_rgb then color = color_utils.hex_to_hsv(public.color_at_cursor() or "#FF0000") end
+	if not is_rgb then
+		color = color_utils.hex_to_hsv(public.color_at_cursor() or "#FF0000")
+	end
 
 	local indices = {
 		red = 1,
@@ -106,7 +124,7 @@ local function generate_line(value_name)
 		blue = 3,
 		hue = 1,
 		saturation = 2,
-		value = 3
+		value = 3,
 	}
 
 	local max_values = {
@@ -115,18 +133,20 @@ local function generate_line(value_name)
 		blue = 255,
 		hue = 360,
 		saturation = 1,
-		value = 1
+		value = 1,
 	}
 
 	local index = indices[value_name]
 	local max_value = max_values[value_name]
 
-	local line = Table { { text = "  " } }
+	local line = Table({ { text = "  " } })
 
 	local value = 0
 	while value < max_value do
 		local char = " "
-		if math.abs(value - color[value_name]) < (max_value / public.picker_width / 2) then char = config.options.ui.symbols.selection end
+		if math.abs(value - color[value_name]) < (max_value / public.picker_width / 2) then
+			char = config.options.ui.symbols.selection
+		end
 
 		local generated_color
 		if is_rgb then
@@ -152,8 +172,12 @@ local function generate_line(value_name)
 	end
 
 	local function fmt(number)
-		if value_name == "saturation" or value_name == "value" then return tostring(math.floor(number * 100 + 0.5)) .. "%" end
-		if value_name == "hue" then return tostring(math.floor(number + 0.5)) .. "°" end
+		if value_name == "saturation" or value_name == "value" then
+			return tostring(math.floor(number * 100 + 0.5)) .. "%"
+		end
+		if value_name == "hue" then
+			return tostring(math.floor(number + 0.5)) .. "°"
+		end
 		return tostring(number)
 	end
 
@@ -178,7 +202,7 @@ function public.refresh()
 	local row = 0
 	while row < public.picker_height do
 		local column = 0
-		local strings = Table {}
+		local strings = Table({})
 		strings:insert({ text = " " })
 		while column < public.picker_width do
 			local value = 1 - row / (public.picker_height - 1)
@@ -186,9 +210,11 @@ function public.refresh()
 			local color = color_utils.hsv_to_hex(public.hue, saturation, value)
 
 			local char = " "
-			if row == public.cursor_row and column == public.cursor_column then char = config.options.ui.symbols.selection end
+			if row == public.cursor_row and column == public.cursor_column then
+				char = config.options.ui.symbols.selection
+			end
 
-			strings:insert({ text = char, background = color, foreground = '#FFFFFF' })
+			strings:insert({ text = char, background = color, foreground = "#FFFFFF" })
 			column = column + 1
 		end
 
@@ -196,19 +222,21 @@ function public.refresh()
 		strings:insert({ text = "    " })
 		strings:insert({ text = "  ", background = color_utils.hsv_to_hex(row / public.picker_height * 360, 1, 1) })
 
-		if row /public.picker_height * 360 == public.hue then strings:insert({ text = " " .. config.options.ui.symbols.hue_arrow }) end
+		if row / public.picker_height * 360 == public.hue then
+			strings:insert({ text = " " .. config.options.ui.symbols.hue_arrow })
+		end
 
 		-- RGB and HSV rows
 		local row_texts = {
 			{
-				{ text = "  RGB: " }
+				{ text = "  RGB: " },
 			},
 			generate_line("red"),
 			generate_line("green"),
 			generate_line("blue"),
 			{},
 			{
-				{ text = "  HSV: "}
+				{ text = "  HSV: " },
 			},
 			generate_line("hue"),
 			generate_line("saturation"),
@@ -216,7 +244,9 @@ function public.refresh()
 		}
 
 		if row_texts[row + 1] then
-			if row /public.picker_height * 360 ~= public.hue then strings:insert({ text = "  " }) end
+			if row / public.picker_height * 360 ~= public.hue then
+				strings:insert({ text = "  " })
+			end
 			for _, text in ipairs(row_texts[row + 1]) do
 				strings:insert(text)
 			end
@@ -234,7 +264,7 @@ function public.refresh()
 
 	local color = public.color_at_cursor() or "#FF0000"
 	while row < 2 do
-		local strings = Table {}
+		local strings = Table({})
 		strings:insert({ text = " " })
 		strings:insert({ text = (" "):rep(public.picker_width), background = color })
 
@@ -270,7 +300,7 @@ function public.open_window()
 	local window_options = {
 		style = "minimal",
 		relative = "editor",
-		border = "rounded",
+		border = config.options.ui.border,
 		width = public.width,
 		height = public.height,
 		row = math.ceil((vim_height - public.height) / 2),
