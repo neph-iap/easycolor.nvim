@@ -198,6 +198,8 @@ function public.refresh()
 	})
 	write_line({})
 
+	local hue_slider_length = public.picker_height
+
 	-- Color picker
 	local row = 0
 	while row < public.picker_height do
@@ -220,7 +222,7 @@ function public.refresh()
 
 		-- Hue Slider
 		strings:insert({ text = "    " })
-		strings:insert({ text = "  ", background = color_utils.hsv_to_hex(row / public.picker_height * 360, 1, 1) })
+		strings:insert({ text = "  ", background = color_utils.hsv_to_hex(row / hue_slider_length * 360, 1, 1) })
 
 		if row / public.picker_height * 360 == public.hue then
 			strings:insert({ text = " " .. config.options.ui.symbols.hue_arrow })
@@ -266,7 +268,7 @@ function public.refresh()
 	while row < 2 do
 		local strings = Table({})
 		strings:insert({ text = " " })
-		strings:insert({ text = (" "):rep(public.picker_width), background = color })
+		strings:insert({ text = (" "):rep(public.picker_width + 6), background = color })
 
 		-- if row == 0 then
 		-- 	strings:insert({ text = "        Template: " })
