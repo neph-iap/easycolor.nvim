@@ -132,11 +132,15 @@ function public.refresh()
 			local color = color_utils.hsv_to_hex(public.hue, saturation, value)
 
 			local char = " "
+			local foreground = "#FFFFFF"
 			if row == public.cursor_row and column == public.cursor_column then
+				if value / saturation > 2 and value > 0.4 then
+					foreground = "#000000"
+				end
 				char = config.options.ui.symbols.selection
 			end
 
-			strings:insert({ text = char, background = color, foreground = "#FFFFFF" })
+			strings:insert({ text = char, background = color, foreground = foreground })
 			column = column + 1
 		end
 
@@ -238,7 +242,13 @@ function public.open_window()
 	}
 
 	for key, action in pairs(config.options.ui.mappings) do
-		vim.api.nvim_buf_set_keymap(public.buffer, "n", key, (":lua require('easycolor.ui.actions').%s()<CR>"):format(action), { nowait = true, noremap = true, silent = true })
+		vim.api.nvim_buf_set_keymap(
+			public.buffer,
+			"n",
+			key,
+			(":lua require('easycolor.ui.actions').%s()<CR>"):format(action),
+			{ nowait = true, noremap = true, silent = true }
+		)
 	end
 
 	public.cursor_row = 1
