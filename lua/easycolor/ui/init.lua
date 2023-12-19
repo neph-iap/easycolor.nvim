@@ -225,6 +225,22 @@ function public.open_window()
 	public.buffer = vim.api.nvim_create_buf(false, true)
 	vim.api.nvim_buf_set_option(public.buffer, "bufhidden", "wipe")
 
+	vim.api.nvim_create_autocmd("BufEnter", {
+		buffer = public.buffer,
+		callback = function()
+			vim.cmd("hi Cursor blend=100")
+			vim.cmd("set guicursor+=a:Cursor/lCursor")
+		end,
+	})
+
+	vim.api.nvim_create_autocmd("BufLeave", {
+		buffer = public.buffer,
+		callback = function()
+			vim.cmd("hi Cursor blend=0")
+			vim.cmd("set guicursor-=a:Cursor/lCursor")
+		end,
+	})
+
 	public.height = 20
 	public.width = 30
 
