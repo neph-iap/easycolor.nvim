@@ -9,6 +9,7 @@ local public = {}
 ---
 ---@return nil
 function public.setup(options)
+	print("WARNING: easycolor.nvim is moving to a new account. Please change your configuration to vi013t/easycolor.nvim. This repo will be deleted soon.")
 	config.set_config(options)
 	local ui = require("easycolor.ui")
 	vim.api.nvim_create_user_command("EasyColor", function()
